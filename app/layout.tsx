@@ -1,32 +1,29 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Comfortaa, Inter, Outfit, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-const comfortaa = Comfortaa({
-  subsets: ["latin"],
-  variable: "--font-comfortaa",
-  weight: ["300", "400", "500", "600", "700"],
-})
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600", "700"],
-})
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-})
+const themeScript = `
+(function() {
+  try {
+    var key = "ingen-theme";
+    var pref = window.localStorage.getItem(key) || "system";
+    if (["system", "light", "dark"].indexOf(pref) === -1) pref = "system";
+    var resolved = pref === "system"
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : pref;
+    var root = document.documentElement;
+    root.dataset.theme = resolved;
+    root.dataset.themePreference = pref;
+    root.classList.toggle("dark", resolved === "dark");
+  } catch (error) {
+    var fallback = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.dataset.theme = fallback;
+    document.documentElement.dataset.themePreference = "system";
+    document.documentElement.classList.toggle("dark", fallback === "dark");
+  }
+})();
+`
 
 export const metadata: Metadata = {
   title: "FORGE — Proof-first hiring",
@@ -40,8 +37,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${comfortaa.variable} ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="font-sans antialiased">
         {children}
         <Analytics />
       </body>
