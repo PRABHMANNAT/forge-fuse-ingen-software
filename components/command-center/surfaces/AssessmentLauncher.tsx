@@ -380,7 +380,7 @@ export function AssessmentLauncher() {
     return unique(ids).slice(0, 8)
   }, [results, selectedCandidates, shortlist])
   const [assessmentType, setAssessmentType] = useState<AssessmentType>("simulation")
-  const [targetMode, setTargetMode] = useState<TargetMode>(selectedCandidates.length > 0 ? "specific" : "shortlist")
+  const [targetMode, setTargetMode] = useState<TargetMode>(activePoolId ? "pool" : selectedCandidates.length > 0 ? "specific" : "shortlist")
   const [selectedIds, setSelectedIds] = useState(baseIds)
   const [poolId, setPoolId] = useState(activePoolId ?? pools[0]?.id ?? "")
   const [deadline, setDeadline] = useState("2026-04-24")

@@ -166,6 +166,24 @@
   body {
     @apply bg-bg text-text font-sans antialiased;
   }
+
+  :where(
+      a[href],
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      [role="button"],
+      [role="link"],
+      [role="tab"],
+      [role="switch"],
+      [tabindex]:not([tabindex="-1"])
+    ):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--accent-muted);
+  }
 }
 
 .grid-background {
@@ -178,18 +196,38 @@
   box-shadow: 0 0 0 1px var(--border-strong), 0 0 0 4px var(--accent-muted);
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 80;
+  transform: translateY(-200%);
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.625rem 0.875rem;
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: transform 0.16s ease;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out forwards;
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .skip-link {
+    transition: none;
+  }
 }

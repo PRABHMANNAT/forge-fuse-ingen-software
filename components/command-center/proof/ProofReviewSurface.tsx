@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { Check, Circle, Minus, X } from "lucide-react"
+import { surfaceMotion } from "@/components/command-center/motion"
 import type { OpenRole } from "@/lib/demo-data/types"
 import type { ProofItem } from "./ProofCard"
 
@@ -167,6 +169,7 @@ function ArtifactReview({ proof }: { proof: ProofItem }) {
 
 export function ProofReviewSurface({ proof, currentRole, onClose }: ProofReviewSurfaceProps) {
   const [items, setItems] = useState(() => (proof ? defaultChecklist(proof, currentRole) : []))
+  const shouldReduceMotion = Boolean(useReducedMotion())
 
   useEffect(() => {
     if (proof) setItems(defaultChecklist(proof, currentRole))
@@ -195,110 +198,120 @@ export function ProofReviewSurface({ proof, currentRole, onClose }: ProofReviewS
     )
   }, [items])
 
-  if (!proof) return null
-
   return (
-    <div className="fixed inset-0 z-[60] bg-bg text-text">
-      <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
-        <div className="min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Proof review mode</div>
-          <div className="truncate text-sm font-semibold text-text">{proof.title}</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="border border-border bg-surface-elevated px-3 py-1.5 text-right">
-            <div className="font-mono text-[9px] uppercase tracking-wide text-text-subtle">Rubric match</div>
-            <div className="font-mono text-sm font-semibold text-text">{score}%</div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center border border-border text-text-muted hover:text-text"
-            aria-label="Close proof review"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
+    <AnimatePresence initial={false}>
+      {proof ? (
+        <motion.div
+          key={proof.id}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Proof review"
+          className="fixed inset-0 z-[60] bg-bg text-text"
+          {...surfaceMotion(shouldReduceMotion)}
+        >
+          <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
+            <div className="min-w-0">
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Proof review mode</div>
+              <div className="truncate text-sm font-semibold text-text">{proof.title}</div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="border border-border bg-surface-elevated px-3 py-1.5 text-right">
+                <div className="font-mono text-[9px] uppercase tracking-wide text-text-subtle">Rubric match</div>
+                <div className="font-mono text-sm font-semibold text-text">{score}%</div>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-8 w-8 items-center justify-center border border-border text-text-muted hover:text-text"
+                aria-label="Close proof review"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </header>
 
-      <main className="grid h-[calc(100vh-3.5rem)] grid-cols-[minmax(0,1fr)_420px]">
-        <section className="min-h-0 border-r border-border bg-bg p-4">
-          <ArtifactReview proof={proof} />
-        </section>
+          <main className="grid h-[calc(100vh-3.5rem)] grid-cols-[minmax(0,1fr)_420px]">
+            <section className="min-h-0 border-r border-border bg-bg p-4">
+              <ArtifactReview proof={proof} />
+            </section>
 
-        <aside className="min-h-0 overflow-y-auto bg-surface">
-          <div className="border-b border-border p-4">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Rubric checklist</div>
-            <h2 className="font-display text-4xl uppercase leading-none text-text">{currentRole?.title ?? proof.role}</h2>
-            <p className="mt-2 text-sm leading-6 text-text-muted">
-              Review the artifact against the loaded rubric. Justifications are local demo state.
-            </p>
-          </div>
+            <aside className="min-h-0 overflow-y-auto bg-surface">
+              <div className="border-b border-border p-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Rubric checklist</div>
+                <h2 className="font-display text-4xl uppercase leading-none text-text">{currentRole?.title ?? proof.role}</h2>
+                <p className="mt-2 text-sm leading-6 text-text-muted">
+                  Review the artifact against the loaded rubric. Justifications are local demo state.
+                </p>
+              </div>
 
-          <div className="divide-y divide-border">
-            {items.map((item, index) => (
-              <section key={item.id} className="bg-surface-elevated p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-text">{item.label}</div>
-                    <div className="mt-1 font-mono text-[10px] uppercase text-text-subtle">{item.weight}% weight</div>
-                  </div>
-                  <div className="flex border border-border">
-                    {(["check", "partial", "missing"] as ReviewState[]).map((state) => (
-                      <button
-                        key={state}
-                        type="button"
-                        onClick={() =>
+              <div className="divide-y divide-border">
+                {items.map((item, index) => (
+                  <section key={item.id} className="bg-surface-elevated p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-text">{item.label}</div>
+                        <div className="mt-1 font-mono text-[10px] uppercase text-text-subtle">{item.weight}% weight</div>
+                      </div>
+                      <div className="flex border border-border">
+                        {(["check", "partial", "missing"] as ReviewState[]).map((state) => (
+                          <button
+                            key={state}
+                            type="button"
+                            onClick={() =>
+                              setItems((current) =>
+                                current.map((currentItem, currentIndex) =>
+                                  currentIndex === index ? { ...currentItem, state } : currentItem,
+                                ),
+                              )
+                            }
+                            aria-pressed={item.state === state}
+                            className={cx(
+                              "flex h-8 w-8 items-center justify-center border-l border-border first:border-l-0",
+                              item.state === state ? "bg-accent-muted" : "bg-surface",
+                            )}
+                            aria-label={`${state} for ${item.label}`}
+                          >
+                            <StateIcon state={state} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-3 border border-border bg-surface p-3">
+                      <div className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">Expected evidence</div>
+                      <p className="mt-1 text-xs leading-5 text-text-muted">{item.evidenceExpected}</p>
+                    </div>
+                    <label className="mt-3 block">
+                      <span className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">Justification</span>
+                      <textarea
+                        value={item.justification}
+                        onChange={(event) =>
                           setItems((current) =>
                             current.map((currentItem, currentIndex) =>
-                              currentIndex === index ? { ...currentItem, state } : currentItem,
+                              currentIndex === index ? { ...currentItem, justification: event.target.value } : currentItem,
                             ),
                           )
                         }
-                        className={cx(
-                          "flex h-8 w-8 items-center justify-center border-l border-border first:border-l-0",
-                          item.state === state ? "bg-accent-muted" : "bg-surface",
-                        )}
-                        aria-label={`${state} for ${item.label}`}
-                      >
-                        <StateIcon state={state} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-3 border border-border bg-surface p-3">
-                  <div className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">Expected evidence</div>
-                  <p className="mt-1 text-xs leading-5 text-text-muted">{item.evidenceExpected}</p>
-                </div>
-                <label className="mt-3 block">
-                  <span className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">Justification</span>
-                  <textarea
-                    value={item.justification}
-                    onChange={(event) =>
-                      setItems((current) =>
-                        current.map((currentItem, currentIndex) =>
-                          currentIndex === index ? { ...currentItem, justification: event.target.value } : currentItem,
-                        ),
-                      )
-                    }
-                    className="mt-2 min-h-20 w-full resize-y border border-border bg-surface p-3 text-xs leading-5 text-text outline-none focus:border-accent"
-                  />
-                </label>
-              </section>
-            ))}
-          </div>
+                        className="mt-2 min-h-20 w-full resize-y border border-border bg-surface p-3 text-xs leading-5 text-text outline-none focus:border-accent"
+                      />
+                    </label>
+                  </section>
+                ))}
+              </div>
 
-          <footer className="border-t border-border bg-surface p-4">
-            <div className="grid grid-cols-3 gap-px bg-border">
-              {["check", "partial", "missing"].map((state) => (
-                <div key={state} className="bg-surface-elevated p-3 text-center">
-                  <div className="font-mono text-lg font-semibold text-text">{items.filter((item) => item.state === state).length}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">{labelize(state)}</div>
+              <footer className="border-t border-border bg-surface p-4">
+                <div className="grid grid-cols-3 gap-px bg-border">
+                  {["check", "partial", "missing"].map((state) => (
+                    <div key={state} className="bg-surface-elevated p-3 text-center">
+                      <div className="font-mono text-lg font-semibold text-text">{items.filter((item) => item.state === state).length}</div>
+                      <div className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">{labelize(state)}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </footer>
-        </aside>
-      </main>
-    </div>
+              </footer>
+            </aside>
+          </main>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   )
 }

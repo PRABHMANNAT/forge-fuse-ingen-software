@@ -40,6 +40,7 @@ type AgentStore = AgentState & {
   setCurrentRole: (roleId: string | null) => void
   createPathway: (pathway: Omit<CompanyPathway, "id">) => void
   setCurrentPathway: (pathwayId: string | null) => void
+  replaceState: (state: AgentState) => void
 }
 
 type StoreAction =
@@ -335,8 +336,8 @@ function contentForAction(action: AgentAction, state: AgentState) {
   }
 }
 
-export function AgentProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialAgentState)
+export function AgentProvider({ children, initialState = initialAgentState }: { children: React.ReactNode; initialState?: AgentState }) {
+  const [state, dispatch] = useReducer(reducer, initialState)
   const stateRef = useRef(state)
   stateRef.current = state
 
@@ -442,6 +443,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
           pathway: { ...pathway, id: `path_${String(state.pathways.length + 1).padStart(3, "0")}` },
         }),
       setCurrentPathway: (pathwayId) => dispatch({ type: "set_current_pathway", pathwayId }),
+      replaceState: (nextState) => dispatch({ type: "replace_state", state: nextState }),
     }),
     [sendMessage, state],
   )

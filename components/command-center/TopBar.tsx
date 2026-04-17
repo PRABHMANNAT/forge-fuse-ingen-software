@@ -41,6 +41,7 @@ export function TopBar({ onOpenKeyboardHelp, keyboardHelpOpen }: TopBarProps) {
           aria-label="Open keyboard shortcuts"
           aria-haspopup="dialog"
           aria-expanded={keyboardHelpOpen}
+          aria-controls="command-center-keyboard-dialog"
           aria-keyshortcuts="Shift+/"
           className="inline-flex h-8 items-center gap-2 border border-border bg-surface-elevated px-3 font-mono text-[10px] uppercase tracking-wide text-text-muted hover:border-border-strong hover:text-text"
         >

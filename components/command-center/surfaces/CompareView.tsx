@@ -333,7 +333,13 @@ export function CompareView() {
                       <div className="font-mono text-[10px] uppercase text-text-subtle">{candidate.id}</div>
                     </div>
                   </button>
-                  <button type="button" onClick={() => togglePin(index)} className="text-text-subtle hover:text-text" aria-label={`Pin ${candidate.name}`}>
+                  <button
+                    type="button"
+                    onClick={() => togglePin(index)}
+                    className="text-text-subtle hover:text-text"
+                    aria-label={`Pin ${candidate.name}`}
+                    aria-pressed={pinned}
+                  >
                     {pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                   </button>
                 </div>
@@ -351,6 +357,7 @@ export function CompareView() {
                 key={`${dimension}-label`}
                 type="button"
                 onClick={() => setSelectedDimension(dimension)}
+                aria-pressed={selectedDimension === dimension}
                 className={cx(
                   "sticky left-0 z-10 border-r border-b border-border bg-surface p-3 text-left",
                   selectedDimension === dimension && "bg-accent-muted",
@@ -468,6 +475,7 @@ export function CompareView() {
                       value={notes[candidate.id] ?? ""}
                       onChange={(event) => setNotes((current) => ({ ...current, [candidate.id]: event.target.value }))}
                       placeholder="Add comparison note."
+                      aria-label={`Comparison note for ${candidate.name}`}
                       className="h-24 w-full resize-none border border-border bg-surface p-2 text-xs leading-5 text-text outline-none placeholder:text-text-subtle focus:border-accent"
                     />
                   </Cell>

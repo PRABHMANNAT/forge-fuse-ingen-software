@@ -156,6 +156,7 @@ export function RoleBuilder() {
               key={label}
               type="button"
               onClick={() => setStep(index)}
+              aria-pressed={step === index}
               className={cx("bg-surface-elevated px-3 py-2 text-left", step === index && "bg-accent-muted")}
             >
               <div className="font-mono text-[10px] uppercase text-text-subtle">Step {index + 1}</div>
@@ -286,6 +287,7 @@ export function RoleBuilder() {
                                 : [...capability.evidenceExpected, evidence],
                             })
                           }
+                          aria-pressed={active}
                           className={cx("border px-1.5 py-1 font-mono text-[10px] uppercase", active ? "border-accent text-text" : "border-border text-text-subtle")}
                         >
                           {evidence}

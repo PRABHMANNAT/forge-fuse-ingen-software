@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { ChevronDown, CircleArrowRight } from "lucide-react"
+import { DISABLED_TRANSITION, PIPELINE_SETTLE_TRANSITION, surfaceMotion } from "@/components/command-center/motion"
 import { useAgentStore } from "@/lib/agent/store"
 import { candidates as allCandidates } from "@/lib/demo-data/candidates"
 import type { Candidate, OpenRole, PipelineStage, TrustLevel } from "@/lib/demo-data/types"
@@ -135,6 +136,7 @@ function CandidateCard({
   onOpen: () => void
   onMove: (stage: Stage) => void
 }) {
+  const shouldReduceMotion = Boolean(useReducedMotion())
   const [mode, setMode] = useState<FormMode>(null)
   const [offerDraft, setOfferDraft] = useState<OfferDraft>({ startDate: "2026-05-03", note: "Paid offer draft ready for approval." })
   const [rejectDraft, setRejectDraft] = useState<RejectDraft>({ reason: "", nurture: false })
@@ -144,18 +146,17 @@ function CandidateCard({
 
   return (
     <motion.article
-      layout
-      animate={moved ? { y: [-10, 0], opacity: [0.65, 1] } : { y: 0, opacity: 1 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      onClick={onOpen}
+      initial={false}
+      animate={shouldReduceMotion || !moved ? { y: 0, opacity: 1 } : { y: [4, 0], opacity: [0.9, 1] }}
+      transition={shouldReduceMotion ? DISABLED_TRANSITION : PIPELINE_SETTLE_TRANSITION}
       className={cx(
-        "border bg-surface-elevated p-3 cursor-pointer",
+        "border bg-surface-elevated p-3",
         moved ? "border-accent" : "border-border hover:border-border-strong",
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <button type="button" onClick={onOpen} className="flex items-center gap-2 text-left">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-strong bg-surface font-mono text-[10px] uppercase text-text-muted">
               {initials(candidate)}
             </span>
@@ -163,7 +164,7 @@ function CandidateCard({
               <div className="truncate text-sm font-semibold text-text">{candidate.name}</div>
               <div className="truncate font-mono text-[10px] uppercase text-text-subtle">{candidate.id}</div>
             </div>
-          </div>
+          </button>
           <div className="mt-2 line-clamp-2 text-xs leading-5 text-text-muted">{candidate.headline}</div>
         </div>
         <span className="border border-border bg-surface px-2 py-1 font-mono text-[10px] uppercase text-text-subtle">{readiness}</span>
@@ -199,10 +200,22 @@ function CandidateCard({
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-2.5 h-4 w-4 text-text-subtle" />
         </label>
-        <button type="button" onClick={() => setMode(mode === "offer" ? null : "offer")} className="border border-border bg-surface px-2 py-2 font-mono text-[10px] uppercase text-text-muted hover:text-text">
+        <button
+          type="button"
+          onClick={() => setMode(mode === "offer" ? null : "offer")}
+          aria-expanded={mode === "offer"}
+          aria-controls={`pipeline-offer-${candidate.id}`}
+          className="border border-border bg-surface px-2 py-2 font-mono text-[10px] uppercase text-text-muted hover:text-text"
+        >
           Offer
         </button>
-        <button type="button" onClick={() => setMode(mode === "reject" ? null : "reject")} className="border border-border bg-surface px-2 py-2 font-mono text-[10px] uppercase text-text-muted hover:text-text">
+        <button
+          type="button"
+          onClick={() => setMode(mode === "reject" ? null : "reject")}
+          aria-expanded={mode === "reject"}
+          aria-controls={`pipeline-reject-${candidate.id}`}
+          className="border border-border bg-surface px-2 py-2 font-mono text-[10px] uppercase text-text-muted hover:text-text"
+        >
           Reject
         </button>
       </div>
@@ -211,14 +224,11 @@ function CandidateCard({
         {mode === "offer" ? (
           <motion.div
             key="offer"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            {...surfaceMotion(shouldReduceMotion)}
             className="overflow-hidden"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mt-3 border border-border bg-surface p-3">
+            <div id={`pipeline-offer-${candidate.id}`} className="mt-3 border border-border bg-surface p-3">
               <div className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">Offer form</div>
               <div className="mt-3 grid gap-3">
                 <label className="block">
@@ -249,14 +259,11 @@ function CandidateCard({
         {mode === "reject" ? (
           <motion.div
             key="reject"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            {...surfaceMotion(shouldReduceMotion)}
             className="overflow-hidden"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mt-3 border border-border bg-surface p-3">
+            <div id={`pipeline-reject-${candidate.id}`} className="mt-3 border border-border bg-surface p-3">
               <div className="font-mono text-[10px] uppercase tracking-wide text-text-subtle">Reject form</div>
               <label className="mt-3 block">
                 <span className="font-mono text-[10px] uppercase text-text-subtle">Reason</span>
@@ -270,6 +277,7 @@ function CandidateCard({
               <button
                 type="button"
                 onClick={() => setRejectDraft((current) => ({ ...current, nurture: !current.nurture }))}
+                aria-pressed={rejectDraft.nurture}
                 className="mt-3 flex w-full items-center justify-between border border-border bg-surface-elevated px-3 py-3 text-left"
               >
                 <span>
@@ -326,7 +334,7 @@ function Column({
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        <motion.div layout className="space-y-2">
+        <div className="space-y-2">
           {candidates.map((candidate) => (
             <CandidateCard
               key={candidate.id}
@@ -340,7 +348,7 @@ function Column({
           {candidates.length === 0 ? (
             <div className="border border-dashed border-border bg-surface-elevated p-3 text-sm leading-6 text-text-muted">No candidates in {labelize(stage).toLowerCase()}.</div>
           ) : null}
-        </motion.div>
+        </div>
       </div>
     </section>
   )
@@ -393,17 +401,30 @@ export function PipelineBoard() {
     const latestMove = [...messages].reverse().find((message) => message.actions?.some((action) => action.intent === "move_pipeline"))
     return latestMove ? `${latestMove.id}:${selectedCandidates.join(",")}` : ""
   }, [messages, selectedCandidates])
+  const latestPipelineMessage = useMemo(
+    () => [...messages].reverse().find((message) => message.actions?.some((action) => action.intent === "move_pipeline")),
+    [messages],
+  )
+  const hasConditionalMove = latestPipelineMessage?.content.toLowerCase().includes("conditional") ?? false
+  const selectedNames = useMemo(
+    () =>
+      selectedCandidates
+        .map((candidateId) => allCandidates.find((candidate) => candidate.id === candidateId)?.name)
+        .filter(Boolean)
+        .join(", "),
+    [selectedCandidates],
+  )
 
   useEffect(() => {
     if (!latestMoveKey || selectedCandidates.length === 0) return
-    setMovedIds(selectedCandidates)
+    setMovedIds(selectedCandidates.slice(0, 3))
     const timeout = window.setTimeout(() => setMovedIds([]), 1800)
     return () => window.clearTimeout(timeout)
   }, [latestMoveKey, selectedCandidates])
 
   function moveStage(candidateIds: string[], stage: Stage) {
     moveCandidatesToStage(candidateIds, stage)
-    setMovedIds(candidateIds)
+    setMovedIds(candidateIds.slice(0, 3))
     window.setTimeout(() => setMovedIds([]), 1800)
   }
 
@@ -473,23 +494,29 @@ export function PipelineBoard() {
             </div>
           </div>
         </div>
+        {hasConditionalMove ? (
+          <div className="mt-3 border border-accent bg-accent-muted px-3 py-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Conditional action queued</div>
+            <div className="mt-1 text-sm font-semibold text-text">
+              Move {selectedNames || "selected candidates"} to interview after simulation pass and zero critical integrity flags.
+            </div>
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden p-4">
-        <LayoutGroup id="pipeline-board">
-          <div className="flex h-full min-h-0 gap-3">
-            {STAGES.map((stage) => (
-              <Column
-                key={stage}
-                stage={stage}
-                candidates={grouped[stage]}
-                movedIds={movedIds}
-                onOpen={openCandidateDrawer}
-                onMove={moveStage}
-              />
-            ))}
-          </div>
-        </LayoutGroup>
+        <div className="flex h-full min-h-0 gap-3">
+          {STAGES.map((stage) => (
+            <Column
+              key={stage}
+              stage={stage}
+              candidates={grouped[stage]}
+              movedIds={movedIds}
+              onOpen={openCandidateDrawer}
+              onMove={moveStage}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )

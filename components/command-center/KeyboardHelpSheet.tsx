@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NAV_ITEMS } from "./navigation"
 
 const GLOBAL_SHORTCUTS = [
-  { keys: "Cmd+K", description: "Open the command palette at the input." },
+  { keys: "Cmd+K", description: "Focus the command input and open the slash command menu." },
   { keys: "/", description: "Focus the command input." },
   { keys: "Esc", description: "Close the drawer, collapse the rail, or dismiss the palette." },
   { keys: "?", description: "Open this keyboard sheet." },
@@ -26,7 +26,7 @@ type KeyboardHelpSheetProps = {
 export function KeyboardHelpSheet({ open, onOpenChange }: KeyboardHelpSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border-border bg-surface p-0">
+      <DialogContent id="command-center-keyboard-dialog" className="max-w-3xl border-border bg-surface p-0">
         <DialogHeader className="border-b border-border bg-surface px-5 py-4 text-left">
           <DialogTitle className="font-display text-4xl uppercase text-text">Keyboard</DialogTitle>
           <DialogDescription className="text-sm text-text-muted">

@@ -201,6 +201,7 @@ export function ProofCard({ proof, onOpen, onEndorse, onFlag, onCompareToRole }:
               key={label}
               type="button"
               onClick={() => action?.(proof)}
+              aria-label={`${label} ${proof.title}`}
               className="flex items-center justify-center gap-1 bg-surface-elevated px-1 py-2 font-mono text-[9px] uppercase text-text-subtle hover:bg-accent-muted hover:text-text"
             >
               <Icon className="h-3 w-3" />

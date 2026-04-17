@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   Check,
   ChevronDown,
@@ -12,6 +12,7 @@ import {
   Rows3,
   X,
 } from "lucide-react"
+import { RESULTS_LIST_ACTION_EVENT, type ResultsListActionDetail } from "@/components/command-center/events"
 import { useAgentStore } from "@/lib/agent/store"
 import { candidates as allCandidates } from "@/lib/demo-data/candidates"
 import type { Candidate, CandidateProofBundle } from "@/lib/demo-data/types"
@@ -309,6 +310,7 @@ function FilterGroup({
               key={`${filterKey}-${option.value}`}
               type="button"
               onClick={() => onToggle(filterKey, option.value)}
+              aria-pressed={active}
               className={cx(
                 "flex w-full items-center justify-between border px-2 py-1.5 text-left text-xs transition-colors",
                 active
@@ -388,7 +390,6 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error] = useState<string | null>(null)
-  const rootRef = useRef<HTMLDivElement>(null)
 
   const baseResults = candidatesOverride ?? (results.length > 0 ? results : allCandidates)
 
@@ -419,6 +420,12 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
     setFocusedIndex((index) => Math.min(index, Math.max(filteredResults.length - 1, 0)))
   }, [filteredResults.length])
 
+  useEffect(() => {
+    const focusedCandidate = filteredResults[focusedIndex]
+    if (!focusedCandidate) return
+    document.getElementById(`candidate-row-${focusedCandidate.id}`)?.scrollIntoView({ block: "nearest" })
+  }, [filteredResults, focusedIndex])
+
   const activeFilterChips = (Object.keys(draftFilters) as FilterKey[]).flatMap((key) =>
     draftFilters[key].map((value) => ({ key, value })),
   )
@@ -444,40 +451,41 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
     openSurface("compare_view")
   }
 
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
-      return
+  useEffect(() => {
+    const onResultsListAction = (event: Event) => {
+      const { action } = (event as CustomEvent<ResultsListActionDetail>).detail
+      const focused = filteredResults[focusedIndex]
+      if (action === "next") {
+        setFocusedIndex((index) => Math.min(index + 1, filteredResults.length - 1))
+        return
+      }
+      if (action === "previous") {
+        setFocusedIndex((index) => Math.max(index - 1, 0))
+        return
+      }
+      if (!focused) return
+      if (action === "select") {
+        toggleCandidateSelection(focused.id)
+        return
+      }
+      if (action === "open") {
+        openCandidate(focused.id)
+        return
+      }
+      if (action === "compare") {
+        compareCandidate(focused.id)
+      }
     }
-
-    const focused = filteredResults[focusedIndex]
-    if (event.key === "j") {
-      event.preventDefault()
-      setFocusedIndex((index) => Math.min(index + 1, filteredResults.length - 1))
-    }
-    if (event.key === "k") {
-      event.preventDefault()
-      setFocusedIndex((index) => Math.max(index - 1, 0))
-    }
-    if (event.key === "x" && focused) {
-      event.preventDefault()
-      toggleCandidateSelection(focused.id)
-    }
-    if (event.key === "o" && focused) {
-      event.preventDefault()
-      openCandidate(focused.id)
-    }
-    if (event.key === "c" && focused) {
-      event.preventDefault()
-      compareCandidate(focused.id)
-    }
-  }
+    window.addEventListener(RESULTS_LIST_ACTION_EVENT, onResultsListAction as EventListener)
+    return () => window.removeEventListener(RESULTS_LIST_ACTION_EVENT, onResultsListAction as EventListener)
+  }, [compareCandidate, filteredResults, focusedIndex, toggleCandidateSelection])
 
   const selectedVisible = selectedCandidates.filter((candidateId) =>
     filteredResults.some((candidate) => candidate.id === candidateId),
   )
 
   return (
-    <div ref={rootRef} tabIndex={0} onKeyDown={handleKeyDown} className="flex h-full min-h-0 flex-col bg-bg outline-none">
+    <div className="flex h-full min-h-0 flex-col bg-bg" aria-label="Candidate results surface">
       {headerStrip}
       <header className="border-b border-border bg-surface px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -491,6 +499,7 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
               onClick={() => setFiltersOpen((open) => !open)}
               className="flex h-8 items-center gap-2 border border-border px-2 font-mono text-[10px] uppercase tracking-wide text-text-muted hover:border-border-strong hover:text-text"
               aria-expanded={filtersOpen}
+              aria-controls="candidate-results-filters"
             >
               {filtersOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
               Filters
@@ -522,6 +531,7 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                   viewMode === "table" ? "bg-accent text-primary-foreground" : "text-text-muted hover:text-text",
                 )}
                 aria-label="Table view"
+                aria-pressed={viewMode === "table"}
               >
                 <Rows3 className="h-4 w-4" />
               </button>
@@ -533,6 +543,7 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                   viewMode === "grid" ? "bg-accent text-primary-foreground" : "text-text-muted hover:text-text",
                 )}
                 aria-label="Grid view"
+                aria-pressed={viewMode === "grid"}
               >
                 <Grid2X2 className="h-4 w-4" />
               </button>
@@ -561,7 +572,7 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
 
       <div className="flex min-h-0 flex-1">
         {filtersOpen ? (
-          <aside className="w-56 shrink-0 overflow-y-auto border-r border-border bg-surface px-3 py-3 xl:w-64">
+          <aside id="candidate-results-filters" className="w-56 shrink-0 overflow-y-auto border-r border-border bg-surface px-3 py-3 xl:w-64">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">
                 <Filter className="h-3.5 w-3.5" />
@@ -686,11 +697,10 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                   return (
                     <div key={candidate.id} className={cx("bg-surface-elevated", focused && "outline outline-1 outline-accent")}>
                       <div
-                        role="button"
-                        tabIndex={-1}
-                        onClick={() => openCandidate(candidate.id)}
+                        id={`candidate-row-${candidate.id}`}
                         onMouseEnter={() => setFocusedIndex(index)}
-                        className="group grid cursor-pointer grid-cols-[28px_minmax(220px,1.5fr)_120px_120px_130px_110px_90px_88px_144px] items-center gap-3 px-3 py-3 text-sm hover:bg-accent-muted"
+                        aria-selected={focused}
+                        className="group grid grid-cols-[28px_minmax(220px,1.5fr)_120px_120px_130px_110px_90px_88px_144px] items-center gap-3 px-3 py-3 text-sm hover:bg-accent-muted"
                       >
                         <button
                           type="button"
@@ -700,10 +710,11 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                           }}
                           className="flex h-5 w-5 items-center justify-center border border-border-strong bg-surface text-accent"
                           aria-label={`Select ${candidate.name}`}
+                          aria-pressed={selected}
                         >
                           {selected ? <Check className="h-3.5 w-3.5" /> : null}
                         </button>
-                        <div className="flex min-w-0 items-center gap-3">
+                        <button type="button" onClick={() => openCandidate(candidate.id)} className="flex min-w-0 items-center gap-3 text-left">
                           <Avatar candidate={candidate} />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
@@ -712,7 +723,7 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                             </div>
                             <div className="truncate text-xs text-text-muted">{candidate.headline}</div>
                           </div>
-                        </div>
+                        </button>
                         <ReadinessBreakdown candidate={candidate} />
                         <span className="w-fit border border-border-strong bg-surface px-2 py-1 font-mono text-[10px] uppercase text-text-muted">
                           {labelize(bundle.trustLevel)}
@@ -781,6 +792,8 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                             }}
                             className="ml-1 flex h-5 w-5 items-center justify-center text-text-subtle hover:text-accent"
                             aria-label={`Explain ${candidate.name} match`}
+                            aria-expanded={expanded}
+                            aria-controls={`candidate-match-${candidate.id}`}
                           >
                             <HelpCircle className="h-3.5 w-3.5" />
                           </button>
@@ -788,7 +801,7 @@ export function CandidateResults({ candidatesOverride, headerStrip, title = "Can
                       </div>
 
                       {expanded ? (
-                        <div className="border-t border-border bg-surface px-12 py-4">
+                        <div id={`candidate-match-${candidate.id}`} className="border-t border-border bg-surface px-12 py-4">
                           <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Match explanation</div>
                           <div className="grid gap-3 lg:grid-cols-4">
                             {explanationDimensions(candidate).map((dimension) => (

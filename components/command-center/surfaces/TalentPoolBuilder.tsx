@@ -248,6 +248,7 @@ export function TalentPoolBuilder() {
                   key={option}
                   type="button"
                   onClick={() => setVisibility(option)}
+                  aria-pressed={visibility === option}
                   className={cx(
                     "bg-surface-elevated px-2 py-2 font-mono text-[10px] uppercase tracking-wide",
                     visibility === option ? "text-accent" : "text-text-muted hover:text-text",
@@ -358,6 +359,7 @@ export function TalentPoolBuilder() {
                       setActivePool(pool.id)
                       setMode("detail")
                     }}
+                    aria-pressed={activePoolId === pool.id}
                     className="flex w-full items-center justify-between border border-border bg-surface-elevated px-2 py-2 text-left text-xs text-text-muted hover:border-border-strong hover:text-text"
                   >
                     <span>{pool.name}</span>

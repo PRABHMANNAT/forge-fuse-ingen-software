@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { dispatchResultsListAction, focusCommandInput, isEditableTarget } from "@/components/command-center/events"
+import { dispatchResultsListAction, focusCommandInput, isEditableTarget, setCommandInputMenu } from "@/components/command-center/events"
 import { useAgentStore } from "@/lib/agent/store"
 import { AgentCanvas } from "./AgentCanvas"
 import { ContextRail } from "./ContextRail"
@@ -119,9 +119,16 @@ export function CommandCenterShell() {
 
       if (event.key === "Escape") {
         if (isKeyboardHelpOpen) return
+        if (document.body.dataset.commandPaletteOpen === "true") {
+          event.preventDefault()
+          setCommandInputMenu("close")
+          return
+        }
         if (activeSurfaces.includes("candidate_drawer")) {
+          event.preventDefault()
           closeSurface("candidate_drawer")
         } else {
+          event.preventDefault()
           collapseRail()
         }
       }

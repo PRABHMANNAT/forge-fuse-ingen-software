@@ -332,7 +332,7 @@ function PathwayEffectivenessTile() {
 }
 
 export function AnalyticsSnapshot() {
-  const { openSurface } = useAgentStore()
+  const { currentRole, openSurface } = useAgentStore()
   const completedAssessments = Math.round(analytics.funnelCounts.assessed * analytics.assessmentCompletionRate)
   const isLoading = false
   const error: string | null = null
@@ -357,6 +357,12 @@ export function AnalyticsSnapshot() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-bg p-4">
+      <div className="mb-4 border border-border bg-surface px-4 py-3">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Analytics snapshot</div>
+        <div className="mt-1 font-display text-3xl uppercase leading-none text-text">
+          {currentRole ? `${currentRole.title} funnel health` : "Funnel health"}
+        </div>
+      </div>
       <div className="grid grid-cols-12 gap-3">
         <FunnelTile />
         <TimeToContactTile />

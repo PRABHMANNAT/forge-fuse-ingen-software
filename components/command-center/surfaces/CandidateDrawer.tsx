@@ -323,7 +323,7 @@ export function CandidateDrawer() {
   }
 
   return (
-    <aside className="h-full w-[640px] shrink-0 border-l border-border bg-surface text-text">
+    <aside className="h-full w-[640px] shrink-0 border-l border-border bg-surface text-text" aria-label="Candidate drawer">
       <div className="flex h-14 items-center justify-between border-b border-border px-4">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-subtle">Candidate drawer</div>
@@ -506,6 +506,7 @@ export function CandidateDrawer() {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveBundleId(item.id)}
+                aria-pressed={item.id === bundle.id}
                 className={cx(
                   "border px-2 py-1 font-mono text-[10px] uppercase tracking-wide",
                   item.id === bundle.id ? "border-accent bg-accent-muted text-text" : "border-border text-text-muted hover:text-text",
@@ -627,6 +628,7 @@ export function CandidateDrawer() {
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
+            aria-label="Recruiter notes"
             className="mt-3 min-h-32 w-full resize-y border border-border bg-surface-elevated p-3 text-sm leading-6 text-text outline-none placeholder:text-text-subtle focus:border-accent"
             placeholder="Add private recruiter notes, tags, or @mentions."
           />

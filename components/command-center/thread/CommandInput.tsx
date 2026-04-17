@@ -1,8 +1,15 @@
 "use client"
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { ArrowUp, Slash } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { COMMAND_INPUT_FOCUS_EVENT, type CommandInputFocusDetail } from "@/components/command-center/events"
+import {
+  COMMAND_INPUT_FOCUS_EVENT,
+  COMMAND_INPUT_MENU_EVENT,
+  type CommandInputFocusDetail,
+  type CommandInputMenuDetail,
+} from "@/components/command-center/events"
+import { surfaceMotion } from "@/components/command-center/motion"
 import { useAgentStore } from "@/lib/agent/store"
 import type { AgentMessage, Intent } from "@/lib/agent/types"
 
@@ -41,6 +48,7 @@ function suggestionsForLastResponse(messages: AgentMessage[]) {
 
 export function CommandInput() {
   const { messages, process } = useAgentStore()
+  const shouldReduceMotion = Boolean(useReducedMotion())
   const [value, setValue] = useState("")
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -59,6 +67,22 @@ export function CommandInput() {
   }, [])
 
   useEffect(() => {
+    const onMenuRequest = (event: Event) => {
+      const detail = (event as CustomEvent<CommandInputMenuDetail>).detail
+      if (detail?.action === "open") {
+        setIsMenuOpen(true)
+        textareaRef.current?.focus()
+        return
+      }
+      if (detail?.action === "close") {
+        setIsMenuOpen(false)
+      }
+    }
+    window.addEventListener(COMMAND_INPUT_MENU_EVENT, onMenuRequest as EventListener)
+    return () => window.removeEventListener(COMMAND_INPUT_MENU_EVENT, onMenuRequest as EventListener)
+  }, [])
+
+  useEffect(() => {
     const textarea = textareaRef.current
     if (!textarea) return
     textarea.style.height = "0px"
@@ -74,6 +98,13 @@ export function CommandInput() {
     }
     document.addEventListener("mousedown", onPointerDown)
     return () => document.removeEventListener("mousedown", onPointerDown)
+  }, [isMenuOpen])
+
+  useEffect(() => {
+    document.body.dataset.commandPaletteOpen = isMenuOpen ? "true" : "false"
+    return () => {
+      delete document.body.dataset.commandPaletteOpen
+    }
   }, [isMenuOpen])
 
   const submit = async () => {
@@ -107,28 +138,37 @@ export function CommandInput() {
           aria-expanded={isMenuOpen}
           aria-haspopup="menu"
           aria-controls="command-input-slash-menu"
+          aria-keyshortcuts="Meta+K Control+K"
         >
           <Slash className="h-4 w-4" />
         </button>
-        {isMenuOpen && (
-          <div id="command-input-slash-menu" role="menu" className="absolute bottom-full left-0 z-20 mb-2 w-72 border border-border bg-surface-elevated p-1">
-            {DEFAULT_SUGGESTIONS.map((command) => (
-              <button
-                key={command}
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setValue(command)
-                  setIsMenuOpen(false)
-                  textareaRef.current?.focus()
-                }}
-                className="block w-full px-2 py-2 text-left text-xs text-text-muted hover:bg-accent-muted hover:text-text"
-              >
-                {command}
-              </button>
-            ))}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {isMenuOpen ? (
+            <motion.div
+              id="command-input-slash-menu"
+              role="menu"
+              aria-label="Slash commands"
+              className="absolute bottom-full left-0 z-20 mb-2 w-72 border border-border bg-surface-elevated p-1"
+              {...surfaceMotion(shouldReduceMotion)}
+            >
+              {DEFAULT_SUGGESTIONS.map((command) => (
+                <button
+                  key={command}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setValue(command)
+                    setIsMenuOpen(false)
+                    textareaRef.current?.focus()
+                  }}
+                  className="block w-full px-2 py-2 text-left text-xs text-text-muted hover:bg-accent-muted hover:text-text"
+                >
+                  {command}
+                </button>
+              ))}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
         <textarea
           ref={textareaRef}
           value={value}
@@ -148,6 +188,7 @@ export function CommandInput() {
           rows={1}
           placeholder="Command Aristotle..."
           aria-label="Command Aristotle"
+          data-command-center-shortcuts="ignore"
           className="max-h-36 min-h-12 w-full resize-none bg-transparent py-3 pl-14 pr-14 text-sm text-text outline-none placeholder:text-text-subtle"
         />
         <button

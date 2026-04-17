@@ -256,6 +256,7 @@ export function PathwayAuthor() {
                               evidenceTypes: active ? milestone.evidenceTypes.filter((item) => item !== evidence) : [...milestone.evidenceTypes, evidence],
                             })
                           }
+                          aria-pressed={active}
                           className={cx("border px-2 py-1 font-mono text-[10px] uppercase", active ? "border-accent text-text" : "border-border text-text-subtle")}
                         >
                           {evidence}

@@ -94,6 +94,7 @@ function ComposeTemplates({
           key={template}
           type="button"
           onClick={() => onSelect(template)}
+          aria-pressed={activeTemplate === template}
           className={cx(
             "border px-2 py-1 font-mono text-[10px] uppercase tracking-wide",
             activeTemplate === template ? "border-accent bg-accent-muted text-text" : "border-border bg-surface text-text-muted hover:text-text",
@@ -232,6 +233,7 @@ export function Inbox() {
               <button
                 type="button"
                 onClick={() => setUnreadOnly((value) => !value)}
+                aria-pressed={unreadOnly}
                 className={cx("bg-surface-elevated px-2 py-2 font-mono text-[10px] uppercase tracking-wide", unreadOnly ? "text-accent" : "text-text-muted hover:text-text")}
               >
                 Unread
@@ -239,6 +241,7 @@ export function Inbox() {
               <button
                 type="button"
                 onClick={() => setNeedsReplyOnly((value) => !value)}
+                aria-pressed={needsReplyOnly}
                 className={cx("bg-surface-elevated px-2 py-2 font-mono text-[10px] uppercase tracking-wide", needsReplyOnly ? "text-accent" : "text-text-muted hover:text-text")}
               >
                 Needs reply
@@ -408,12 +411,14 @@ export function Inbox() {
               <input
                 value={activeDraft?.subject ?? ""}
                 onChange={(event) => updateDraft({ subject: event.target.value })}
+                aria-label="Reply subject"
                 className="h-10 border border-border bg-surface-elevated px-3 text-sm text-text outline-none focus:border-accent"
                 placeholder="Subject"
               />
               <textarea
                 value={activeDraft?.body ?? ""}
                 onChange={(event) => updateDraft({ body: event.target.value })}
+                aria-label="Reply body"
                 className="min-h-0 flex-1 resize-none border border-border bg-surface-elevated p-3 text-sm leading-6 text-text outline-none focus:border-accent"
                 placeholder="Compose recruiter reply"
               />

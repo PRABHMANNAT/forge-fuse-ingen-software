@@ -19,7 +19,7 @@ export function LeftNav({ activeModule, onOpenModule }: LeftNavProps) {
             key={item.module}
             type="button"
             onClick={() => onOpenModule(item)}
-            title={`${item.label}${item.shortcut ? ` · Cmd+${item.shortcut}` : ""}`}
+            title={`${item.label}${item.shortcut ? ` - Cmd+${item.shortcut}` : ""}`}
             aria-current={isActive ? "page" : undefined}
             aria-keyshortcuts={item.shortcut ? `Meta+${item.shortcut} Control+${item.shortcut}` : undefined}
             className={cn(
